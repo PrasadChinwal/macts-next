@@ -1,82 +1,142 @@
 import Head from 'next/head'
+import tmdb from "/lib/tmdb";
+import Show from "/components/show";
+import React, {useCallback, useEffect, useState} from 'react';
+import AsideDetail from "../components/aside-detail";
+import {ViewGridIcon as ViewGridIconSolid, ViewListIcon} from "@heroicons/react/solid";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+const tabs = [
+    { name: 'Recently Viewed', href: '#', current: true },
+    { name: 'Recently Added', href: '#', current: false },
+    { name: 'Favorited', href: '#', current: false },
+]
 
-      <main className="flex flex-col items-center justify-center w-full flex-1 px-20 text-center">
-        <h1 className="text-6xl font-bold">
-          Welcome to{' '}
-          <a className="text-blue-600" href="https://nextjs.org">
-            Next.js!
-          </a>
-        </h1>
+function classNames(...classes) {
+    return classes.filter(Boolean).join(' ')
+}
 
-        <p className="mt-3 text-2xl">
-          Get started by editing{' '}
-          <code className="p-3 font-mono text-lg bg-gray-100 rounded-md">
-            pages/index.js
-          </code>
-        </p>
+export default function Home({props, data}) {
+    const [currentSelected, setCurrentSelected] = useState({});
+    const shouldShowAside = Object.keys(currentSelected).length > 0;
 
-        <div className="flex flex-wrap items-center justify-around max-w-4xl mt-6 sm:w-full">
-          <a
-            href="https://nextjs.org/docs"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Documentation &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Find in-depth information about Next.js features and API.
-            </p>
-          </a>
+    const updateSelected = (selected) => {
+        setCurrentSelected(selected)
+    }
 
-          <a
-            href="https://nextjs.org/learn"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Learn &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Learn about Next.js in an interactive course with quizzes!
-            </p>
-          </a>
+    return (
+      <>
+          <div className="flex-1 flex items-stretch overflow-hidden">
+              <main className="flex-1 overflow-y-auto">
+                  <div className="pt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                      <div className="flex">
+                          <h1 className="flex-1 text-2xl font-bold text-gray-900">Photos</h1>
+                          <div className="ml-6 bg-gray-100 p-0.5 rounded-lg flex items-center sm:hidden">
+                              <button
+                                  type="button"
+                                  className="p-1.5 rounded-md text-gray-400 hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                              >
+                                  <ViewListIcon className="h-5 w-5" aria-hidden="true" />
+                                  <span className="sr-only">Use list view</span>
+                              </button>
+                              <button
+                                  type="button"
+                                  className="ml-0.5 bg-white p-1.5 rounded-md shadow-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                              >
+                                  <ViewGridIconSolid className="h-5 w-5" aria-hidden="true" />
+                                  <span className="sr-only">Use grid view</span>
+                              </button>
+                          </div>
+                      </div>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Examples &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Discover and deploy boilerplate example Next.js projects.
-            </p>
-          </a>
+                      {/* Tabs */}
+                      <div className="mt-3 sm:mt-2">
+                          <div className="sm:hidden">
+                              <label htmlFor="tabs" className="sr-only">
+                                  Select a tab
+                              </label>
+                              {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
+                              <select
+                                  id="tabs"
+                                  name="tabs"
+                                  className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                                  defaultValue="Recently Viewed"
+                              >
+                                  <option>Recently Viewed</option>
+                                  <option>Recently Added</option>
+                                  <option>Favorited</option>
+                              </select>
+                          </div>
+                          <div className="hidden sm:block">
+                              <div className="flex items-center border-b border-gray-200">
+                                  <nav className="flex-1 -mb-px flex space-x-6 xl:space-x-8" aria-label="Tabs">
+                                      {tabs.map((tab) => (
+                                          <a
+                                              key={tab.name}
+                                              href={tab.href}
+                                              aria-current={tab.current ? 'page' : undefined}
+                                              className={classNames(
+                                                  tab.current
+                                                      ? 'border-indigo-500 text-indigo-600'
+                                                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+                                                  'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm'
+                                              )}
+                                          >
+                                              {tab.name}
+                                          </a>
+                                      ))}
+                                  </nav>
+                                  <div className="hidden ml-6 bg-gray-100 p-0.5 rounded-lg items-center sm:flex">
+                                      <button
+                                          type="button"
+                                          className="p-1.5 rounded-md text-gray-400 hover:bg-white hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                                      >
+                                          <ViewListIcon className="h-5 w-5" aria-hidden="true" />
+                                          <span className="sr-only">Use list view</span>
+                                      </button>
+                                      <button
+                                          type="button"
+                                          className="ml-0.5 bg-white p-1.5 rounded-md shadow-sm text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+                                      >
+                                          <ViewGridIconSolid className="h-5 w-5" aria-hidden="true" />
+                                          <span className="sr-only">Use grid view</span>
+                                      </button>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="p-6 mt-6 text-left border w-96 rounded-xl hover:text-blue-600 focus:text-blue-600"
-          >
-            <h3 className="text-2xl font-bold">Deploy &rarr;</h3>
-            <p className="mt-4 text-xl">
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+                      {/* Gallery */}
+                      <section className="mt-8 pb-16" aria-labelledby="gallery-heading">
+                          <h2 id="gallery-heading" className="sr-only">
+                              Recently viewed
+                          </h2>
+                          <ul
+                              role="list"
+                              className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 xl:gap-x-8"
+                          >
+                              {data && data.results && data.results.map((item, index) => (
+                                  <Show key={item.id} show={item} updateSelected={updateSelected}/>
+                                ))
+                              }
+                          </ul>
+                      </section>
+                  </div>
+              </main>
 
-      <footer className="flex items-center justify-center w-full h-24 border-t">
-        <a
-          className="flex items-center justify-center"
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="h-4 ml-2" />
-        </a>
-      </footer>
-    </div>
+              {/* Details sidebar */}
+              { shouldShowAside &&
+                  <AsideDetail show={currentSelected} updateSelected={updateSelected}/>
+              }
+          </div>
+    </>
   )
+}
+
+export async function getStaticProps(context) {
+  const results = await tmdb.get('/trending/all/day');
+  const data = results.data
+  console.log(data)
+  return {
+    props: { data },
+  }
 }
